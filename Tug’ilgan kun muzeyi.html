@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Muhammadrizo — 12 Yosh Virtual 3D Muzey</title>
+  <style>
+    :root {
+      --bg-deep: #060b19;
+      --glass-bg: rgba(255, 255, 255, 0.11);
+      --glass-bg-strong: rgba(15, 23, 42, 0.52);
+      --glass-surface: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.24) 0%,
+        rgba(125, 211, 252, 0.12) 48%,
+        rgba(15, 23, 42, 0.58) 100%
+      );
+      --glass-modal: linear-gradient(
+        155deg,
+        rgba(255, 255, 255, 0.2) 0%,
+        rgba(56, 189, 248, 0.12) 42%,
+        rgba(9, 15, 32, 0.86) 100%
+      );
+      --glass-border: rgba(255, 255, 255, 0.34);
+      --glass-border-gold: rgba(254, 240, 138, 0.55);
+      --glass-shadow:
+        0 20px 50px rgba(2, 6, 23, 0.55),
+        inset 0 1px 1px rgba(255, 255, 255, 0.55),
+        inset 0 -1px 1px rgba(251, 191, 36, 0.2);
+      --gold-1: #fef08a;
+      --gold-2: #f59e0b;
+      --gold-3: #d97706;
+      --danger-1: #fca5a5;
+      --danger-bg: rgba(185, 28, 28, 0.45);
+      --danger-border: rgba(248, 113, 113, 0.65);
+      --text-main: #f8fafc;
+      --text-muted: #dbeafe;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.22), transparent 42%),
+        radial-gradient(circle at 85% 20%, rgba(245, 158, 11, 0.18), transparent 45%),
+        radial-gradient(circle at 50% 90%, rgba(37, 99, 235, 0.2), transparent 50%),
+        var(--bg-deep);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      touch-action: none;
+    }
+
+    #museum-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      z-index: 1;
+    }
+
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 6;
+      background: transparent;
+    }
+
+    .top-hud {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .brand-pill {
+      position: relative;
+      overflow: hidden;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      box-shadow: var(--glass-shadow);
+      pointer-events: auto;
+    }
+
+    .brand-badge {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 25%, #ffffff, var(--gold-1) 38%, var(--gold-2) 78%, var(--gold-3) 100%);
+      color: #091020;
+      font-weight: 900;
+      font-size: 13px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+    }
+
+    .brand-name {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+    }
+
+    .brand-age {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--gold-1);
+      background: rgba(245, 158, 11, 0.22);
+      border: 1px solid rgba(254, 240, 138, 0.55);
+      padding: 2px 9px;
+      border-radius: 999px;
+    }
+
+    .hud-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .hud-mini-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 15px;
+      border-radius: 999px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      box-shadow: var(--glass-shadow);
+      transition: transform 0.18s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    .hud-mini-btn:hover {
+      border-color: var(--glass-border-gold);
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .hud-mini-btn:active {
+      transform: scale(0.96);
+    }
+
+    .action-btn {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(254, 240, 138, 0.85);
+      background: linear-gradient(135deg, rgba(254, 240, 138, 0.96), rgba(245, 158, 11, 0.92));
+      color: #091020;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      pointer-events: auto;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 12px 28px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .action-btn.visible {
+      display: inline-flex;
+    }
+
+    .joystick-zone {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: 126px;
+      height: 126px;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle at 30% 25%,
+        rgba(255, 255, 255, 0.28),
+        rgba(56, 189, 248, 0.14) 50%,
+        rgba(15, 23, 42, 0.65) 100%
+      );
+      border: 1.5px solid var(--glass-border);
+      backdrop-filter: blur(26px) saturate(185%);
+      -webkit-backdrop-filter: blur(26px) saturate(185%);
+      z-index: 10;
+      touch-action: none;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .joystick-knob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 50px;
+      height: 50px;
+      margin-left: -25px;
+      margin-top: -25px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 32% 28%, #ffffff 0%, #fef08a 35%, #f59e0b 75%, #b45309 100%);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 8px 22px rgba(245, 158, 11, 0.55), inset 0 2px 4px rgba(255, 255, 255, 0.9);
+      pointer-events: none;
+    }
+
+    .controls-hint {
+      position: fixed;
+      right: 16px;
+      bottom: 20px;
+      padding: 11px 16px;
+      border-radius: 22px;
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(26px) saturate(185%);
+      -webkit-backdrop-filter: blur(26px) saturate(185%);
+      color: var(--text-muted);
+      font-size: 11px;
+      line-height: 1.45;
+      z-index: 10;
+      pointer-events: none;
+      text-align: right;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .controls-hint strong {
+      color: var(--gold-1);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 7, 18, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 30;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 440px;
+      max-height: 90vh;
+      overflow-y: auto;
+      border-radius: 30px;
+      background: var(--glass-modal);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(34px) saturate(200%);
+      -webkit-backdrop-filter: blur(34px) saturate(200%);
+      box-shadow: var(--glass-shadow);
+      padding: 22px;
+      color: var(--text-main);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--gold-1);
+    }
+
+    .close-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.14);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+    }
+
+    .photo-preview-img {
+      width: 100%;
+      max-height: 62vh;
+      object-fit: contain;
+      border-radius: 18px;
+      border: 1px solid var(--glass-border);
+      background: rgba(7, 12, 24, 0.65);
+      display: block;
+    }
+
+    .card-box {
+      padding: 16px;
+      border-radius: 20px;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.18),
+        rgba(245, 158, 11, 0.16) 55%,
+        rgba(56, 189, 248, 0.14)
+      );
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      margin-bottom: 14px;
+    }
+
+    .card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold-1);
+      margin-bottom: 6px;
+    }
+
+    .card-number {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-holder {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .preset-btn, .chip-btn {
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--text-main);
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      backdrop-filter: blur(16px);
+      transition: all 0.18s ease;
+    }
+
+    .preset-btn.active {
+      background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+      color: #091020;
+      border-color: rgba(255, 255, 255, 0.85);
+    }
+
+    .confirm-check-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 13px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(16px);
+      margin-bottom: 12px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .confirm-check-row input {
+      width: 17px;
+      height: 17px;
+      accent-color: #f59e0b;
+      cursor: pointer;
+    }
+
+    .input-field, .textarea-field {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(7, 13, 29, 0.58);
+      backdrop-filter: blur(16px);
+      color: #fff;
+      font-size: 14px;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .input-field:focus, .textarea-field:focus {
+      border-color: var(--gold-1);
+    }
+
+    .textarea-field {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .row-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-gold {
+      flex: 1;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      background: linear-gradient(135deg, var(--gold-1), var(--gold-2));
+      color: #091020;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(245, 158, 11, 0.35);
+    }
+
+    .btn-ghost {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(16px);
+      color: var(--gold-1);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .toast {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 11px 18px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(15, 23, 42, 0.85));
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(26px) saturate(190%);
+      -webkit-backdrop-filter: blur(26px) saturate(190%);
+      color: var(--gold-1);
+      font-size: 12.5px;
+      font-weight: 800;
+      z-index: 40;
+      display: none;
+      white-space: nowrap;
+      box-shadow: var(--glass-shadow);
+    }
+
+    .toast.error {
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.32), var(--danger-bg));
+      border-color: var(--danger-border);
+      color: var(--danger-1);
+    }
+
+    .toast.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="museum-canvas"></canvas>
+  <canvas id="confetti-canvas"></canvas>
+
+  <div class="top-hud">
+    <div class="brand-pill">
+      <div class="brand-badge">12</div>
+      <span class="brand-name">MUHAMMADRIZO</span>
+      <span class="brand-age">12 YOSH</span>
+    </div>
+    <div class="hud-actions">
+      <button id="upload-photos-btn" class="hud-mini-btn" type="button">+ Rasmlar qo'yish</button>
+      <button id="share-link-btn" class="hud-mini-btn" type="button">Silkani yuborish</button>
+      <button id="context-action-btn" class="action-btn" type="button">Ochish</button>
+    </div>
+  </div>
+  <input id="photo-file-input" type="file" accept="image/*" multiple style="display:none;" />
+
+  <div id="toast" class="toast"></div>
+
+  <div id="joystick-zone" class="joystick-zone" aria-label="Joystik">
+    <div id="joystick-knob" class="joystick-knob"></div>
+  </div>
+
+  <div class="controls-hint">
+    <strong>Joystik / WASD:</strong> Yurish<br />
+    <strong>Surish:</strong> 360° &amp; Tepaga-pastga
+  </div>
+
+  <div id="photo-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Muhammadrizo • 12 Yosh</div>
+        <button id="close-photo-modal" class="close-btn" type="button">&times;</button>
+      </div>
+      <img id="photo-modal-img" class="photo-preview-img" alt="Muzey rasmi" />
+    </div>
+  </div>
+
+  <div id="atm-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Sovg'a Bankomati (ATM)</div>
+        <button id="close-atm-modal" class="close-btn" type="button">&times;</button>
+      </div>
+      <div class="card-box">
+        <div class="card-label">Humo / UzCard Karta Raqami</div>
+        <div class="card-number">9860 0301 7968 3237</div>
+        <div class="card-holder">Karta egasi: MUHAMMADRIZO</div>
+      </div>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-amount="50 000 so'm" type="button">50 000 so'm</button>
+        <button class="preset-btn" data-amount="100 000 so'm" type="button">100 000 so'm</button>
+        <button class="preset-btn" data-amount="250 000 so'm" type="button">250 000 so'm</button>
+        <button class="preset-btn" data-amount="500 000 so'm" type="button">500 000 so'm</button>
+      </div>
+      <input id="atm-custom-amount" class="input-field" type="text" placeholder="Yoki boshqa summa (masalan: 150 000 so'm)" />
+      <label class="confirm-check-row" for="atm-sent-checkbox">
+        <input id="atm-sent-checkbox" type="checkbox" />
+        <span>9860 0301 7968 3237 kartasiga haqiqatdan ham pul o'tkazdim</span>
+      </label>
+      <div class="row-actions">
+        <button id="copy-card-btn" class="btn-ghost" type="button">Kartani nusxalash</button>
+        <button id="confirm-gift-btn" class="btn-gold" type="button">Pul tashladim</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="telegram-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Telegram Tabrik (@Muhammadrzoo1)</div>
+        <button id="close-tg-modal" class="close-btn" type="button">&times;</button>
+      </div>
+      <div class="row-actions" style="margin-bottom: 10px;">
+        <button class="chip-btn" data-wish="Muhammadrizo, 12 yoshing muborak! Sog'-salomat, baxtli va zafarli bo'l!" type="button">Tabrik 1</button>
+        <button class="chip-btn" data-wish="Tug'ilgan kuning bilan Muhammadrizo! Barcha orzularing amalga oshsin!" type="button">Tabrik 2</button>
+      </div>
+      <input id="tg-sender-name" class="input-field" type="text" placeholder="Ismingiz (ixtiyoriy)" />
+      <textarea id="tg-wish-text" class="textarea-field" placeholder="Tabrik so'zlaringizni yozing..."></textarea>
+      <div class="row-actions">
+        <button id="send-tg-btn" class="btn-gold" type="button">Telegramda yuborish</button>
+        <button id="copy-tg-btn" class="btn-ghost" type="button">Matnni nusxalash</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="share-modal" class="modal-backdrop" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title">Muzey Silkasini Yuborish</div>
+        <button id="close-share-modal" class="close-btn" type="button">&times;</button>
+      </div>
+      <div class="card-box">
+        <div class="card-label">Taklifnoma Silka</div>
+        <div id="share-link-preview" class="card-holder" style="word-break: break-all; color: #f8fafc; font-size: 12px;"></div>
+      </div>
+      <input id="share-custom-url" class="input-field" type="text" placeholder="Sayt/hosting silkangiz bo'lsa, shu yerga kiriting..." />
+      <div class="row-actions" style="margin-bottom: 10px;">
+        <button id="copy-share-link-btn" class="btn-gold" type="button">Silkani nusxalash</button>
+        <button id="native-share-btn" class="btn-ghost" type="button">Ulashish (Share)</button>
+      </div>
+      <button id="send-share-tg-btn" class="btn-ghost" style="width: 100%;" type="button">Telegram (@Muhammadrzoo1) ga yuborish</button>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_PHOTOS_KEY = 'muhammadrizo_12_museum_photos_final';
+    const IDB_NAME = 'MuhammadrizoMuseumDB';
+    const IDB_STORE = 'photos';
+
+    const museumCanvas = document.getElementById('museum-canvas');
+    const ctx = museumCanvas.getContext('2d');
+    const confettiCanvas = document.getElementById('confetti-canvas');
+    const confettiCtx = confettiCanvas.getContext('2d');
+    const contextActionBtn = document.getElementById('context-action-btn');
+    const toastEl = document.getElementById('toast');
+
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickKnob = document.getElementById('joystick-knob');
+
+    const photoModal = document.getElementById('photo-modal');
+    const photoModalImg = document.getElementById('photo-modal-img');
+    const closePhotoModalBtn = document.getElementById('close-photo-modal');
+
+    const atmModal = document.getElementById('atm-modal');
+    const closeAtmModalBtn = document.getElementById('close-atm-modal');
+    const atmCustomAmount = document.getElementById('atm-custom-amount');
+    const atmSentCheckbox = document.getElementById('atm-sent-checkbox');
+    const copyCardBtn = document.getElementById('copy-card-btn');
+    const confirmGiftBtn = document.getElementById('confirm-gift-btn');
+
+    const telegramModal = document.getElementById('telegram-modal');
+    const closeTgModalBtn = document.getElementById('close-tg-modal');
+    const tgSenderName = document.getElementById('tg-sender-name');
+    const tgWishText = document.getElementById('tg-wish-text');
+    const sendTgBtn = document.getElementById('send-tg-btn');
+    const copyTgBtn = document.getElementById('copy-tg-btn');
+
+    const uploadPhotosBtn = document.getElementById('upload-photos-btn');
+    const photoFileInput = document.getElementById('photo-file-input');
+    const shareLinkBtn = document.getElementById('share-link-btn');
+    const shareModal = document.getElementById('share-modal');
+    const closeShareModalBtn = document.getElementById('close-share-modal');
+    const shareLinkPreview = document.getElementById('share-link-preview');
+    const shareCustomUrl = document.getElementById('share-custom-url');
+    const copyShareLinkBtn = document.getElementById('copy-share-link-btn');
+    const nativeShareBtn = document.getElementById('native-share-btn');
+    const sendShareTgBtn = document.getElementById('send-share-tg-btn');
+
+    function showToast(msg, isError = false) {
+      toastEl.textContent = msg;
+      toastEl.classList.toggle('error', isError);
+      toastEl.classList.add('show');
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => {
+        toastEl.classList.remove('show');
+        toastEl.classList.remove('error');
+      }, 2800);
+    }
+
+    // IndexedDB + localStorage ishonchli rasm saqlash tizimi
+    function openPhotoDB() {
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) return reject(new Error('No IndexedDB'));
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(IDB_STORE)) {
+            db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function savePhotosEverywhere(photos) {
+      const cleanList = photos.filter((u) => typeof u === 'string' && u.length > 0).slice(0, 7);
+      try {
+        localStorage.setItem(STORAGE_PHOTOS_KEY, JSON.stringify(cleanList));
+      } catch (_) {}
+
+      try {
+        const db = await openPhotoDB();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(IDB_STORE, 'readwrite');
+          const store = tx.objectStore(IDB_STORE);
+          store.put({ id: 'museum_photos', list: cleanList, updatedAt: Date.now() });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } catch (_) {}
+    }
+
+    async function loadPhotosFromEverywhere() {
+      try {
+        const db = await openPhotoDB();
+        const fromIdb = await new Promise((resolve) => {
+          const tx = db.transaction(IDB_STORE, 'readonly');
+          const store = tx.objectStore(IDB_STORE);
+          const req = store.get('museum_photos');
+          req.onsuccess = () => {
+            const val = req.result;
+            if (val && Array.isArray(val.list) && val.list.length > 0) resolve(val.list);
+            else resolve(null);
+          };
+          req.onerror = () => resolve(null);
+        });
+        db.close();
+        if (fromIdb) return fromIdb;
+      } catch (_) {}
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_PHOTOS_KEY) || 'null');
+        if (Array.isArray(saved) && saved.length > 0) return saved;
+      } catch (_) {}
+
+      return null;
+    }
+
+    function compressDataUrlToJpeg(dataUrl, maxDim = 640, quality = 0.72) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width || maxDim;
+          let h = img.height || maxDim;
+          if (w > maxDim || h > maxDim) {
+            if (w >= h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, w);
+          c.height = Math.max(1, h);
+          const g = c.getContext('2d');
+          g.drawImage(img, 0, 0, c.width, c.height);
+          try {
+            resolve(c.toDataURL('image/jpeg', quality));
+          } catch (_) {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      });
+    }
+
+    function makeDefaultCardDataUrl(title, subtitle, c1, c2, badgeText) {
+      const c = document.createElement('canvas');
+      c.width = 420;
+      c.height = 520;
+      const g = c.getContext('2d');
+      const grad = g.createLinearGradient(0, 0, 420, 520);
+      grad.addColorStop(0, c1);
+      grad.addColorStop(1, c2);
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 420, 520);
+      g.strokeStyle = 'rgba(254, 240, 138, 0.72)';
+      g.lineWidth = 5;
+      g.strokeRect(22, 22, 376, 476);
+      g.fillStyle = 'rgba(255,255,255,0.16)';
+      g.beginPath();
+      g.arc(210, 200, 88, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#fef08a';
+      g.font = '900 50px sans-serif';
+      g.textAlign = 'center';
+      g.fillText(badgeText, 210, 216);
+      g.fillStyle = '#ffffff';
+      g.font = '800 23px sans-serif';
+      g.fillText(title, 210, 350);
+      g.fillStyle = '#e2e8f0';
+      g.font = '600 16px sans-serif';
+      g.fillText(subtitle, 210, 384);
+      return c.toDataURL('image/jpeg', 0.75);
+    }
+
+    const MUSEUM_PHOTOS = [
+      makeDefaultCardDataUrl("MUHAMMADRIZO • 12", "Tug'ilgan kuning muborak!", "#1e3a8a", "#92400e", "12"),
+      makeDefaultCardDataUrl("Yangi Yil & Bayram", "Quvonchli on", "#0f766e", "#1d4ed8", "2026"),
+      makeDefaultCardDataUrl("Gulli Bog'da", "Yorqin lahzalar", "#7e22ce", "#be185d", "★"),
+      makeDefaultCardDataUrl("Tabiat Qo'ynida", "Do'stlik va kulgi", "#15803d", "#0369a1", "12+"),
+      makeDefaultCardDataUrl("Qushlar Muzeyi", "Kashfiyot kuni", "#0284c7", "#312e81", "MUZEY"),
+      makeDefaultCardDataUrl("Tower Bridge", "Sayohat xotirasi", "#b45309", "#1e293b", "UK"),
+      makeDefaultCardDataUrl("Bayram Dasturxoni", "12 Sham — 12 Tilak", "#9f1239", "#78350f", "HAPPY")
+    ];
+
+    const loadedPhotoImages = new Map();
+    function hydratePhotoImage(url) {
+      if (loadedPhotoImages.has(url)) return loadedPhotoImages.get(url);
+      const img = new Image();
+      img.src = url;
+      loadedPhotoImages.set(url, img);
+      return img;
+    }
+    MUSEUM_PHOTOS.forEach(hydratePhotoImage);
+
+    // Sahifa ochilganda saqlangan rasmlarni tiklash
+    loadPhotosFromEverywhere().then((savedPhotos) => {
+      if (savedPhotos && savedPhotos.length > 0) {
+        MUSEUM_PHOTOS.splice(0, MUSEUM_PHOTOS.length, ...savedPhotos);
+        savedPhotos.forEach(hydratePhotoImage);
+      }
+    });
+
+    let selectedGiftAmount = "50 000 so'm";
+    let activeInteraction = null;
+    let confettiParticles = [];
+
+    function getViewportSize() {
+      const w = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 390);
+      const h = Math.max(480, window.innerHeight || document.documentElement.clientHeight || 844);
+      return { w, h };
+    }
+
+    function resizeCanvases() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const { w, h } = getViewportSize();
+      museumCanvas.width = Math.floor(w * dpr);
+      museumCanvas.height = Math.floor(h * dpr);
+      confettiCanvas.width = Math.floor(w * dpr);
+      confettiCanvas.height = Math.floor(h * dpr);
+    }
+
+    function launchConfetti(count = 50) {
+      const colors = ['#fde68a', '#f59e0b', '#ef4444', '#38bdf8', '#a855f7', '#34d399'];
+      const { w } = getViewportSize();
+      for (let i = 0; i < count; i++) {
+        confettiParticles.push({
+          x: Math.random() * w,
+          y: -20 - Math.random() * 140,
+          w: 6 + Math.random() * 7,
+          h: 4 + Math.random() * 5,
+          vx: (Math.random() - 0.5) * 3.0,
+          vy: 2.0 + Math.random() * 3.5,
+          rot: Math.random() * Math.PI * 2,
+          vRot: (Math.random() - 0.5) * 0.16,
+          color: colors[i % colors.length]
+        });
+      }
+    }
+
+    function updateAndDrawConfetti() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const { w, h } = getViewportSize();
+      confettiCtx.save();
+      confettiCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      confettiCtx.clearRect(0, 0, w, h);
+      for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rot += p.vRot;
+        confettiCtx.save();
+        confettiCtx.translate(p.x, p.y);
+        confettiCtx.rotate(p.rot);
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        confettiCtx.restore();
+        if (p.y > h + 30) confettiParticles.splice(i, 1);
+      }
+      confettiCtx.restore();
+    }
+
+    resizeCanvases();
+    window.addEventListener('resize', resizeCanvases);
+
+    const cam = { x: 0, y: 1.72, z: 9.6, yaw: 0, pitch: 0.04 };
+    const tgPos = { x: -2.8, y: 0, z: 5.2 };
+    const atmPos = { x: 2.8, y: 0, z: 5.2 };
+    const plantPositions = [
+      { x: -7.2, z: -7.8 },
+      { x: 7.2, z: -7.8 },
+      { x: -7.2, z: 11.2 },
+      { x: 7.2, z: 11.2 }
+    ];
+
+    const frameSpecs = [
+      { cx: 1.15, cy: 2.85, cz: -9.28, nx: 0, nz: 1, hw: 1.25, hh: 1.55, idx: 0 },
+      { cx: -8.76, cy: 2.65, cz: -3.8, nx: 1, nz: 0, hw: 1.05, hh: 1.3, idx: 1 },
+      { cx: -8.76, cy: 2.65, cz: 0.4, nx: 1, nz: 0, hw: 1.05, hh: 1.3, idx: 2 },
+      { cx: -8.76, cy: 2.65, cz: 4.6, nx: 1, nz: 0, hw: 1.05, hh: 1.3, idx: 3 },
+      { cx: 8.76, cy: 2.65, cz: -3.8, nx: -1, nz: 0, hw: 1.05, hh: 1.3, idx: 4 },
+      { cx: 8.76, cy: 2.65, cz: 0.4, nx: -1, nz: 0, hw: 1.05, hh: 1.3, idx: 5 },
+      { cx: 8.76, cy: 2.65, cz: 4.6, nx: -1, nz: 0, hw: 1.05, hh: 1.3, idx: 6 }
+    ];
+
+    function worldToCamera(wx, wy, wz) {
+      const dx = wx - cam.x;
+      const dy = wy - cam.y;
+      const dz = wz - cam.z;
+      const cosY = Math.cos(-cam.yaw);
+      const sinY = Math.sin(-cam.yaw);
+      const rx = dx * cosY - dz * sinY;
+      const rz = dx * sinY + dz * cosY;
+      const cosP = Math.cos(-cam.pitch);
+      const sinP = Math.sin(-cam.pitch);
+      const ry = dy * cosP - rz * sinP;
+      const fz = dy * sinP + rz * cosP;
+      return { x: rx, y: ry, z: fz };
+    }
+
+    function projectPoint(wx, wy, wz, w, h) {
+      const p = worldToCamera(wx, wy, wz);
+      if (p.z <= 0.08) return null;
+      const fov = (64 * Math.PI) / 180;
+      const scale = (h * 0.5) / Math.tan(fov * 0.5);
+      return {
+        sx: w * 0.5 + (p.x * scale) / p.z,
+        sy: h * 0.5 - (p.y * scale) / p.z,
+        depth: p.z,
+        scale: scale / p.z
+      };
+    }
+
+    function drawQuad3D(pts, fillStyle, strokeStyle, lineWidth = 1) {
+      if (!pts || pts.some((pt) => !pt)) return;
+      ctx.beginPath();
+      ctx.moveTo(pts[0].sx, pts[0].sy);
+      for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].sx, pts[i].sy);
+      ctx.closePath();
+      if (fillStyle) { ctx.fillStyle = fillStyle; ctx.fill(); }
+      if (strokeStyle) { ctx.strokeStyle = strokeStyle; ctx.lineWidth = lineWidth; ctx.stroke(); }
+    }
+
+    function drawTexturedFrame3D(spec, w, h, hitTargets) {
+      const { cx, cy, cz, nx, nz, hw, hh, idx } = spec;
+      const tx = -nz, tz = nx;
+
+      const pTL = projectPoint(cx - tx * hw, cy + hh, cz - tz * hw, w, h);
+      const pTR = projectPoint(cx + tx * hw, cy + hh, cz + tz * hw, w, h);
+      const pBR = projectPoint(cx + tx * hw, cy - hh, cz + tz * hw, w, h);
+      const pBL = projectPoint(cx - tx * hw, cy - hh, cz - tz * hw, w, h);
+      if (!pTL || !pTR || !pBR || !pBL) return;
+
+      const pad = 0.11;
+      const fTL = projectPoint(cx - tx * (hw + pad) + nx * 0.02, cy + hh + pad, cz - tz * (hw + pad) + nz * 0.02, w, h);
+      const fTR = projectPoint(cx + tx * (hw + pad) + nx * 0.02, cy + hh + pad, cz + tz * (hw + pad) + nz * 0.02, w, h);
+      const fBR = projectPoint(cx + tx * (hw + pad) + nx * 0.02, cy - hh - pad, cz + tz * (hw + pad) + nz * 0.02, w, h);
+      const fBL = projectPoint(cx - tx * (hw + pad) + nx * 0.02, cy - hh - pad, cz - tz * (hw + pad) + nz * 0.02, w, h);
+      drawQuad3D([fTL, fTR, fBR, fBL], 'rgba(251, 191, 36, 0.92)', 'rgba(254, 240, 138, 0.95)', 2);
+
+      const url = MUSEUM_PHOTOS[idx % MUSEUM_PHOTOS.length];
+      const img = hydratePhotoImage(url);
+      const avgDepth = (pTL.depth + pTR.depth + pBR.depth + pBL.depth) * 0.25;
+
+      if (img && img.complete && img.naturalWidth > 0) {
+        const minX = Math.min(pTL.sx, pTR.sx, pBR.sx, pBL.sx);
+        const maxX = Math.max(pTL.sx, pTR.sx, pBR.sx, pBL.sx);
+        const minY = Math.min(pTL.sy, pTR.sy, pBR.sy, pBL.sy);
+        const maxY = Math.max(pTL.sy, pTR.sy, pBR.sy, pBL.sy);
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(pTL.sx, pTL.sy);
+        ctx.lineTo(pTR.sx, pTR.sy);
+        ctx.lineTo(pBR.sx, pBR.sy);
+        ctx.lineTo(pBL.sx, pBL.sy);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, minX, minY, Math.max(2, maxX - minX), Math.max(2, maxY - minY));
+        ctx.restore();
+      } else {
+        drawQuad3D([pTL, pTR, pBR, pBL], '#1e3a8a', null, 0);
+      }
+
+      drawQuad3D([pTL, pTR, pBR, pBL], null, 'rgba(255,255,255,0.45)', 1.5);
+      hitTargets.push({ depth: avgDepth, poly: [pTL, pTR, pBR, pBL], data: { kind: 'photo', photoUrl: url } });
+    }
+
+    function drawKiosk3D(pos, title, line1, line2, accent, kind, w, h, hitTargets) {
+      const toViewerX = 0 - pos.x;
+      const toViewerZ = 9.6 - pos.z;
+      const len = Math.hypot(toViewerX, toViewerZ) || 1;
+      const fx = toViewerX / len, fz = toViewerZ / len;
+      const rx = fz, rz = -fx;
+      const hw = 0.46, hd = 0.22, botY = 0.14, topY = 1.56;
+
+      function corner(sx, sy, sz) {
+        return projectPoint(pos.x + rx * sx + fx * sz, sy, pos.z + rz * sx + fz * sz, w, h);
+      }
+
+      drawQuad3D([
+        corner(-hw * 1.15, botY, -hd * 1.4),
+        corner(hw * 1.15, botY, -hd * 1.4),
+        corner(hw * 1.15, botY, hd * 1.4),
+        corner(-hw * 1.15, botY, hd * 1.4)
+      ], '#f59e0b', '#fef08a', 1.5);
+
+      const f0 = corner(-hw, botY, hd), f1 = corner(hw, botY, hd), f2 = corner(hw, topY, hd), f3 = corner(-hw, topY, hd);
+      if (f0 && f1 && f2 && f3) {
+        drawQuad3D([f0, f1, f2, f3], 'rgba(15, 29, 58, 0.94)', accent, 2.5);
+        const s0 = corner(-0.36, 0.98, hd + 0.01), s1 = corner(0.36, 0.98, hd + 0.01), s2 = corner(0.36, 1.44, hd + 0.01), s3 = corner(-0.36, 1.44, hd + 0.01);
+        if (s0 && s1 && s2 && s3) {
+          drawQuad3D([s0, s1, s2, s3], 'rgba(8, 15, 34, 0.98)', accent, 2);
+          const midX = (s0.sx + s1.sx + s2.sx + s3.sx) * 0.25;
+          const midY = (s0.sy + s1.sy + s2.sy + s3.sy) * 0.25;
+          const boxW = Math.hypot(s1.sx - s0.sx, s1.sy - s0.sy);
+          if (boxW > 20) {
+            ctx.save();
+            ctx.textAlign = 'center';
+            ctx.fillStyle = accent;
+            ctx.font = `800 ${Math.max(9, Math.round(boxW * 0.11))}px sans-serif`;
+            ctx.fillText(title, midX, midY - boxW * 0.13);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `700 ${Math.max(8, Math.round(boxW * 0.095))}px sans-serif`;
+            ctx.fillText(line1, midX, midY + boxW * 0.02);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = `600 ${Math.max(8, Math.round(boxW * 0.085))}px sans-serif`;
+            ctx.fillText(line2, midX, midY + boxW * 0.16);
+            ctx.restore();
+          }
+        }
+        const avgDepth = (f0.depth + f1.depth + f2.depth + f3.depth) * 0.25;
+        hitTargets.push({ depth: avgDepth, poly: [f0, f1, f2, f3], data: { kind } });
+      }
+    }
+
+    function drawWavingCharacter3D(elapsed, w, h) {
+      const cx = -1.6, baseY = 0.36, cz = -6.0;
+      const headPt = projectPoint(cx, baseY + 1.65, cz, w, h);
+      const torsoTop = projectPoint(cx, baseY + 1.35, cz, w, h);
+      const torsoBot = projectPoint(cx, baseY + 0.68, cz, w, h);
+      if (!torsoTop || !torsoBot || !headPt) return;
+
+      const waveAngle = -2.35 + Math.sin(elapsed * 4.5) * 0.38;
+      const rShoulder = projectPoint(cx + 0.34, baseY + 1.32, cz, w, h);
+      const rHand = projectPoint(cx + 0.34 + Math.cos(waveAngle) * 0.25, baseY + 1.32 - Math.sin(waveAngle) * 0.56, cz + 0.12, w, h);
+
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#2563eb';
+      ctx.lineWidth = Math.max(8, 28 * torsoTop.scale);
+      ctx.beginPath();
+      ctx.moveTo(torsoTop.sx, torsoTop.sy);
+      ctx.lineTo(torsoBot.sx, torsoBot.sy);
+      ctx.stroke();
+
+      if (rShoulder && rHand) {
+        ctx.strokeStyle = '#60a5fa';
+        ctx.lineWidth = Math.max(4, 11 * torsoTop.scale);
+        ctx.beginPath();
+        ctx.moveTo(rShoulder.sx, rShoulder.sy);
+        ctx.lineTo(rHand.sx, rHand.sy);
+        ctx.stroke();
+      }
+
+      const headR = Math.max(6, 18 * headPt.scale);
+      ctx.fillStyle = '#f1c27d';
+      ctx.beginPath();
+      ctx.arc(headPt.sx, headPt.sy, headR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawMuseum3D(elapsed) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const { w, h } = getViewportSize();
+      ctx.save();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      ctx.fillStyle = '#070d1d';
+      ctx.fillRect(0, 0, w, h);
+
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, h);
+      skyGrad.addColorStop(0, '#091226');
+      skyGrad.addColorStop(0.5, '#13244a');
+      skyGrad.addColorStop(0.5, '#0d1934');
+      skyGrad.addColorStop(1, '#060c1a');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      drawQuad3D([
+        projectPoint(-8.8, 0, -9.4, w, h),
+        projectPoint(-8.8, 7.2, -9.4, w, h),
+        projectPoint(-8.8, 7.2, 13.0, w, h),
+        projectPoint(-8.8, 0, 13.0, w, h)
+      ], 'rgba(18, 33, 66, 0.72)', 'rgba(251, 191, 36, 0.25)', 1.5);
+
+      drawQuad3D([
+        projectPoint(8.8, 0, -9.4, w, h),
+        projectPoint(8.8, 7.2, -9.4, w, h),
+        projectPoint(8.8, 7.2, 13.0, w, h),
+        projectPoint(8.8, 0, 13.0, w, h)
+      ], 'rgba(18, 33, 66, 0.72)', 'rgba(251, 191, 36, 0.25)', 1.5);
+
+      drawQuad3D([
+        projectPoint(-8.8, 0, -9.4, w, h),
+        projectPoint(-8.8, 7.2, -9.4, w, h),
+        projectPoint(8.8, 7.2, -9.4, w, h),
+        projectPoint(8.8, 0, -9.4, w, h)
+      ], 'rgba(22, 39, 78, 0.82)', 'rgba(251, 191, 36, 0.35)', 1.5);
+
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.24)';
+      ctx.lineWidth = 1;
+      for (let gx = -8; gx <= 8; gx += 2) {
+        const pA = projectPoint(gx, 0, -9.2, w, h), pB = projectPoint(gx, 0, 13.0, w, h);
+        if (pA && pB) { ctx.beginPath(); ctx.moveTo(pA.sx, pA.sy); ctx.lineTo(pB.sx, pB.sy); ctx.stroke(); }
+      }
+      for (let gz = -8; gz <= 12; gz += 2) {
+        const pA = projectPoint(-8.8, 0, gz, w, h), pB = projectPoint(8.8, 0, gz, w, h);
+        if (pA && pB) { ctx.beginPath(); ctx.moveTo(pA.sx, pA.sy); ctx.lineTo(pB.sx, pB.sy); ctx.stroke(); }
+      }
+
+      drawQuad3D([
+        projectPoint(-1.3, 0.01, -6.5, w, h),
+        projectPoint(1.3, 0.01, -6.5, w, h),
+        projectPoint(1.3, 0.01, 12.8, w, h),
+        projectPoint(-1.3, 0.01, 12.8, w, h)
+      ], 'rgba(190, 18, 60, 0.76)', 'rgba(251, 191, 36, 0.78)', 2);
+
+      drawQuad3D([
+        projectPoint(-3.6, 0.36, -7.9, w, h),
+        projectPoint(3.6, 0.36, -7.9, w, h),
+        projectPoint(3.6, 0.36, -5.1, w, h),
+        projectPoint(-3.6, 0.36, -5.1, w, h)
+      ], 'rgba(30, 41, 59, 0.92)', '#fbbf24', 2.5);
+
+      plantPositions.forEach((p) => {
+        const pt = projectPoint(p.x, 0.85, p.z, w, h);
+        if (pt) {
+          ctx.fillStyle = '#16a34a';
+          ctx.beginPath();
+          ctx.arc(pt.sx, pt.sy, Math.max(5, 36 * pt.scale), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      });
+
+      drawWavingCharacter3D(elapsed, w, h);
+
+      const hitTargets = [];
+      frameSpecs.forEach((spec) => drawTexturedFrame3D(spec, w, h, hitTargets));
+      drawKiosk3D(tgPos, "TELEGRAM TABRIK", "@Muhammadrzoo1", "Tabrik yuborish", "#38bdf8", "telegram", w, h, hitTargets);
+      drawKiosk3D(atmPos, "SOVG'A ATM", "9860 0301 7968 3237", "MUHAMMADRIZO", "#fbbf24", "atm", w, h, hitTargets);
+
+      ctx.restore();
+      return hitTargets;
+    }
+
+    function pointInPoly(px, py, poly) {
+      if (!poly || poly.length < 3) return false;
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const xi = poly[i].sx, yi = poly[i].sy, xj = poly[j].sx, yj = poly[j].sy;
+        const intersect = ((yi > py) !== (yj > py)) && (px < ((xj - xi) * (py - yi)) / ((yj - yi) || 1e-6) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    let lastHitTargets = [];
+    const keys = {};
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    let joyActive = false, joyPointerId = null, joyVecX = 0, joyVecY = 0;
+    const maxJoyRadius = 36;
+
+    function setKnob(dx, dy) {
+      const dist = Math.hypot(dx, dy);
+      const clamped = Math.min(dist, maxJoyRadius);
+      const angle = Math.atan2(dy, dx);
+      const kx = Math.cos(angle) * clamped, ky = Math.sin(angle) * clamped;
+      joystickKnob.style.transform = `translate(${kx}px, ${ky}px)`;
+      joyVecX = kx / maxJoyRadius;
+      joyVecY = ky / maxJoyRadius;
+    }
+
+    joystickZone.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      joyActive = true; joyPointerId = e.pointerId;
+      joystickZone.setPointerCapture(e.pointerId);
+      const rect = joystickZone.getBoundingClientRect();
+      setKnob(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+    });
+
+    joystickZone.addEventListener('pointermove', (e) => {
+      if (!joyActive || e.pointerId !== joyPointerId) return;
+      e.stopPropagation();
+      const rect = joystickZone.getBoundingClientRect();
+      setKnob(e.clientX - (rect.left + rect.width / 2), e.clientY - (rect.top + rect.height / 2));
+    });
+
+    function releaseJoystick(e) {
+      if (!joyActive || (e && e.pointerId !== joyPointerId)) return;
+      joyActive = false; joyPointerId = null; setKnob(0, 0);
+    }
+    joystickZone.addEventListener('pointerup', releaseJoystick);
+    joystickZone.addEventListener('pointercancel', releaseJoystick);
+
+    let lookActive = false, lookPointerId = null, lastPointerX = 0, lastPointerY = 0, movedDuringTap = false;
+
+    museumCanvas.addEventListener('pointerdown', (e) => {
+      if (joyActive) return;
+      lookActive = true; lookPointerId = e.pointerId;
+      lastPointerX = e.clientX; lastPointerY = e.clientY; movedDuringTap = false;
+    });
+
+    museumCanvas.addEventListener('pointermove', (e) => {
+      if (!lookActive || e.pointerId !== lookPointerId) return;
+      const dx = e.clientX - lastPointerX, dy = e.clientY - lastPointerY;
+      if (Math.hypot(dx, dy) > 5) movedDuringTap = true;
+      lastPointerX = e.clientX; lastPointerY = e.clientY;
+      cam.yaw -= dx * 0.0052;
+      cam.pitch = Math.max(-1.45, Math.min(1.45, cam.pitch - dy * 0.0046));
+    });
+
+    museumCanvas.addEventListener('pointerup', (e) => {
+      if (e.pointerId !== lookPointerId) return;
+      const wasTap = !movedDuringTap;
+      lookActive = false; lookPointerId = null;
+      if (wasTap) {
+        const sorted = lastHitTargets.slice().sort((a, b) => a.depth - b.depth);
+        for (const hit of sorted) {
+          if (pointInPoly(e.clientX, e.clientY, hit.poly)) {
+            triggerObjectInteraction(hit.data);
+            break;
+          }
+        }
+      }
+    });
+
+    function triggerObjectInteraction(data) {
+      if (!data) return;
+      if (data.kind === 'photo' && data.photoUrl) {
+        photoModalImg.src = data.photoUrl;
+        photoModal.classList.add('open');
+        launchConfetti(35);
+      } else if (data.kind === 'atm') {
+        atmSentCheckbox.checked = false;
+        atmModal.classList.add('open');
+      } else if (data.kind === 'telegram') {
+        telegramModal.classList.add('open');
+        launchConfetti(45);
+      }
+    }
+
+    contextActionBtn.addEventListener('click', () => { if (activeInteraction) triggerObjectInteraction(activeInteraction); });
+
+    function resolveCollisions(pos) {
+      pos.x = Math.max(-7.9, Math.min(7.9, pos.x));
+      pos.z = Math.max(-8.3, Math.min(12.2, pos.z));
+      const obstacles = [
+        { x: tgPos.x, z: tgPos.z, r: 0.9 },
+        { x: atmPos.x, z: atmPos.z, r: 0.9 },
+        ...plantPositions.map((p) => ({ x: p.x, z: p.z, r: 0.7 }))
+      ];
+      for (const ob of obstacles) {
+        const dx = pos.x - ob.x, dz = pos.z - ob.z;
+        const dist = Math.hypot(dx, dz), minDist = ob.r + 0.4;
+        if (dist < minDist) {
+          const nx = dist > 0.0001 ? dx / dist : 0, nz = dist > 0.0001 ? dz / dist : 1;
+          pos.x = ob.x + nx * minDist;
+          pos.z = ob.z + nz * minDist;
+        }
+      }
+    }
+
+    let lastTime = performance.now();
+    const startTime = lastTime;
+
+    function stepFrame(now) {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      const elapsed = (now - startTime) / 1000;
+      lastTime = now;
+
+      let moveForward = -joyVecY, moveRight = joyVecX;
+      if (keys['KeyW'] || keys['ArrowUp']) moveForward += 1;
+      if (keys['KeyS'] || keys['ArrowDown']) moveForward -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) moveRight += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) moveRight -= 1;
+
+      const len = Math.hypot(moveForward, moveRight);
+      if (len > 0.02) {
+        const normF = moveForward / Math.max(1, len), normR = moveRight / Math.max(1, len);
+        const speed = 4.6 * dt;
+        const forwardX = -Math.sin(cam.yaw), forwardZ = -Math.cos(cam.yaw);
+        const rightX = Math.cos(cam.yaw), rightZ = -Math.sin(cam.yaw);
+        cam.x += (forwardX * normF + rightX * normR) * speed;
+        cam.z += (forwardZ * normF + rightZ * normR) * speed;
+        resolveCollisions(cam);
+      }
+
+      const distAtm = Math.hypot(cam.x - atmPos.x, cam.z - atmPos.z);
+      const distTg = Math.hypot(cam.x - tgPos.x, cam.z - tgPos.z);
+      if (distAtm < 2.6) {
+        activeInteraction = { kind: 'atm' };
+        contextActionBtn.textContent = "Sovg'a ATM ochish";
+        contextActionBtn.classList.add('visible');
+      } else if (distTg < 2.6) {
+        activeInteraction = { kind: 'telegram' };
+        contextActionBtn.textContent = "Telegram tabrik";
+        contextActionBtn.classList.add('visible');
+      } else {
+        activeInteraction = null;
+        contextActionBtn.classList.remove('visible');
+      }
+
+      lastHitTargets = drawMuseum3D(elapsed);
+      updateAndDrawConfetti();
+    }
+
+    function loop(now) {
+      stepFrame(now);
+      requestAnimationFrame(loop);
+    }
+
+    closePhotoModalBtn.addEventListener('click', () => photoModal.classList.remove('open'));
+    photoModal.addEventListener('click', (e) => { if (e.target === photoModal) photoModal.classList.remove('open'); });
+    closeAtmModalBtn.addEventListener('click', () => atmModal.classList.remove('open'));
+    atmModal.addEventListener('click', (e) => { if (e.target === atmModal) atmModal.classList.remove('open'); });
+
+    document.querySelectorAll('.preset-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedGiftAmount = btn.dataset.amount;
+        atmCustomAmount.value = '';
+      });
+    });
+
+    copyCardBtn.addEventListener('click', () => {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText('9860030179683237').catch(() => {});
+      showToast("Karta raqami nusxalandi: 9860 0301 7968 3237");
+    });
+
+    confirmGiftBtn.addEventListener('click', () => {
+      const customVal = (atmCustomAmount.value || '').trim();
+      const amount = customVal || selectedGiftAmount;
+      const numericPart = parseInt(amount.replace(/[^\d]/g, ''), 10);
+
+      if (!atmSentCheckbox.checked) {
+        showToast("Pul tashlamadingiz! Avval tasdiqlang.", true);
+        return;
+      }
+      if (!amount || Number.isNaN(numericPart) || numericPart <= 0) {
+        showToast("Pul tashlamadingiz! Summani kiriting.", true);
+        return;
+      }
+
+      launchConfetti(85);
+      showToast(`Sovg'a (${amount}) qayd etildi!`);
+    });
+
+    closeTgModalBtn.addEventListener('click', () => telegramModal.classList.remove('open'));
+    telegramModal.addEventListener('click', (e) => { if (e.target === telegramModal) telegramModal.classList.remove('open'); });
+
+    document.querySelectorAll('.chip-btn').forEach((chip) => {
+      chip.addEventListener('click', () => { tgWishText.value = chip.dataset.wish; });
+    });
+
+    function buildWishMessage() {
+      const sender = (tgSenderName.value || '').trim();
+      const wish = (tgWishText.value || '').trim() || "Muhammadrizo, 12 yoshingiz muborak bo'lsin!";
+      return sender ? `${wish}\n— ${sender}` : wish;
+    }
+
+    copyTgBtn.addEventListener('click', () => {
+      const text = buildWishMessage();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => {});
+      showToast("Tabrik matni nusxalandi!");
+    });
+
+    sendTgBtn.addEventListener('click', () => {
+      const text = encodeURIComponent(buildWishMessage());
+      window.open(`https://t.me/Muhammadrzoo1?text=${text}`, '_blank', 'noopener,noreferrer');
+      launchConfetti(75);
+    });
+
+    uploadPhotosBtn.addEventListener('click', () => photoFileInput.click());
+
+    photoFileInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+      Promise.all(files.map((file) => new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : null);
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      }))).then(async (results) => {
+        const validUrls = results.filter(Boolean);
+        if (!validUrls.length) {
+          showToast("Rasmlarni o'qib bo'lmadi", true);
+          return;
+        }
+        const compressedList = await Promise.all(
+          validUrls.slice(0, 7).map((u) => compressDataUrlToJpeg(u, 640, 0.72))
+        );
+        MUSEUM_PHOTOS.splice(0, MUSEUM_PHOTOS.length, ...compressedList);
+        compressedList.forEach(hydratePhotoImage);
+        await savePhotosEverywhere(compressedList);
+        launchConfetti(60);
+        showToast(`${compressedList.length} ta rasm saqlandi va muzeyga joylandi!`);
+      });
+      photoFileInput.value = '';
+    });
+
+    function getCurrentShareUrl() {
+      const custom = (shareCustomUrl.value || '').trim();
+      if (custom) return custom;
+      if (window.location && window.location.href && window.location.href.startsWith('http')) {
+        return window.location.href.split('#')[0];
+      }
+      return 'https://t.me/Muhammadrzoo1';
+    }
+
+    function updateSharePreview() { shareLinkPreview.textContent = getCurrentShareUrl(); }
+    shareLinkBtn.addEventListener('click', () => { updateSharePreview(); shareModal.classList.add('open'); });
+    closeShareModalBtn.addEventListener('click', () => shareModal.classList.remove('open'));
+    shareModal.addEventListener('click', (e) => { if (e.target === shareModal) shareModal.classList.remove('open'); });
+    shareCustomUrl.addEventListener('input', updateSharePreview);
+
+    copyShareLinkBtn.addEventListener('click', () => {
+      const url = getCurrentShareUrl();
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(() => {});
+      showToast("Silka nusxalandi!");
+    });
+
+    nativeShareBtn.addEventListener('click', async () => {
+      const url = getCurrentShareUrl();
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: "Muhammadrizo — 12 Yosh Virtual 3D Muzey", url });
+          launchConfetti(50);
+          return;
+        } catch (_) {}
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).catch(() => {});
+      showToast("Silka nusxalandi!");
+    });
+
+    sendShareTgBtn.addEventListener('click', () => {
+      const url = getCurrentShareUrl();
+      const msg = encodeURIComponent(`Muhammadrizoning 12 yoshlik virtual 3D muzeyi: ${url}`);
+      window.open(`https://t.me/Muhammadrzoo1?text=${msg}`, '_blank', 'noopener,noreferrer');
+      launchConfetti(60);
+    });
+
+    stepFrame(performance.now());
+    launchConfetti(50);
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
